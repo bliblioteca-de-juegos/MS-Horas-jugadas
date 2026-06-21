@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/horas-jugadas")
+@RequestMapping("/api/v2/horas-jugadas")
 @RequiredArgsConstructor
 public class HorasJugadasController {
 
