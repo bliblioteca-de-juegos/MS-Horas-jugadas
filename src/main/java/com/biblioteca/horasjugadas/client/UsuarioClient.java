@@ -1,16 +1,13 @@
 package com.biblioteca.horasjugadas.client;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import com.biblioteca.horasjugadas.dto.UsuarioDTO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-
 @Component
-@RequiredArgsConstructor
 public class UsuarioClient {
-
-    private final WebClient usuarioWebClient;
-
+    @Autowired
+    private WebClient usuarioWebClient;
     public UsuarioDTO obtenerUsuario(Long usuarioId) {
         return usuarioWebClient.get()
                 .uri("/api/v2/usuarios/{id}", usuarioId)

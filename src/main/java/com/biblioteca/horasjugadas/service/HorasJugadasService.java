@@ -1,5 +1,6 @@
 package com.biblioteca.horasjugadas.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import com.biblioteca.horasjugadas.client.JuegoClient;
 import com.biblioteca.horasjugadas.client.UsuarioClient;
 import com.biblioteca.horasjugadas.dto.HorasJugadasRequestDTO;
@@ -8,59 +9,50 @@ import com.biblioteca.horasjugadas.dto.JuegoDTO;
 import com.biblioteca.horasjugadas.model.HorasJugadas;
 import com.biblioteca.horasjugadas.repository.HorasJugadasRepository;
 import feign.FeignException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 @Service
-@RequiredArgsConstructor
 public class HorasJugadasService {
-
-    private final HorasJugadasRepository horasJugadasRepository;
-    private final JuegoClient juegoClient;
-    private final UsuarioClient usuarioClient;
-
+    @Autowired
+    private HorasJugadasRepository horasJugadasRepository;
+    @Autowired
+    private JuegoClient juegoClient;
+    @Autowired
+    private UsuarioClient usuarioClient;
     public List<HorasJugadasResponseDTO> obtenerTodas() {
         return horasJugadasRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public Optional<HorasJugadasResponseDTO> obtenerPorId(Long id) {
         return horasJugadasRepository.findById(id).map(this::mapToDTO);
     }
-
     public List<HorasJugadasResponseDTO> obtenerPorUsuario(Long usuarioId) {
         validarUsuario(usuarioId);
         return horasJugadasRepository.findByUsuarioId(usuarioId).stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public List<HorasJugadasResponseDTO> obtenerPorJuego(Long juegoId) {
         validarJuego(juegoId);
         return horasJugadasRepository.findByJuegoId(juegoId).stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public Optional<HorasJugadasResponseDTO> obtenerPorUsuarioYJuego(Long usuarioId, Long juegoId) {
         validarUsuario(usuarioId);
         validarJuego(juegoId);
         return horasJugadasRepository.findByUsuarioIdAndJuegoId(usuarioId, juegoId)
                 .map(this::mapToDTO);
     }
-
     @Transactional
     public HorasJugadasResponseDTO registrarHoras(HorasJugadasRequestDTO dto) {
         validarUsuario(dto.getUsuarioId());
         validarJuego(dto.getJuegoId());
-
         HorasJugadas registro = horasJugadasRepository
                 .findByUsuarioIdAndJuegoId(dto.getUsuarioId(), dto.getJuegoId())
                 .map(existente -> {
@@ -75,15 +67,12 @@ public class HorasJugadasService {
                         dto.getMinutosJugados(),
                         LocalDateTime.now()
                 ));
-
         return mapToDTO(horasJugadasRepository.save(registro));
     }
-
     @Transactional
     public Optional<HorasJugadasResponseDTO> actualizarTotal(Long id, HorasJugadasRequestDTO dto) {
         validarUsuario(dto.getUsuarioId());
         validarJuego(dto.getJuegoId());
-
         return horasJugadasRepository.findById(id).map(registro -> {
             registro.setUsuarioId(dto.getUsuarioId());
             registro.setJuegoId(dto.getJuegoId());
@@ -92,7 +81,6 @@ public class HorasJugadasService {
             return mapToDTO(horasJugadasRepository.save(registro));
         });
     }
-
     @Transactional
     public void eliminar(Long id) {
         if (!horasJugadasRepository.existsById(id)) {
@@ -100,7 +88,6 @@ public class HorasJugadasService {
         }
         horasJugadasRepository.deleteById(id);
     }
-
     private HorasJugadasResponseDTO mapToDTO(HorasJugadas registro) {
         JuegoDTO juego = obtenerJuegoSeguro(registro.getJuegoId());
         return new HorasJugadasResponseDTO(
@@ -113,7 +100,6 @@ public class HorasJugadasService {
                 juego
         );
     }
-
     private void validarUsuario(Long usuarioId) {
         try {
             usuarioClient.obtenerUsuario(usuarioId);
@@ -121,7 +107,6 @@ public class HorasJugadasService {
             throw new IllegalArgumentException("No existe un usuario con id " + usuarioId);
         }
     }
-
     private void validarJuego(Long juegoId) {
         try {
             juegoClient.obtenerJuego(juegoId);
@@ -129,7 +114,6 @@ public class HorasJugadasService {
             throw new IllegalArgumentException("No existe un juego con id " + juegoId);
         }
     }
-
     private JuegoDTO obtenerJuegoSeguro(Long juegoId) {
         try {
             return juegoClient.obtenerJuego(juegoId);
